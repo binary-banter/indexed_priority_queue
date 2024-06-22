@@ -1,0 +1,10 @@
+[package]
+name = "indexed_priority_queue"
+description = "An indexed priority queue with index-based removals, restores and value updates."
+version = "0.1.0"
+edition = "2021"
+authors = ["Julia Dijkstra <juliadijkstra97@gmail.com", "Jonathan Brouwer <jonathantbrouwer@gmail.com>"]
+license = "MIT"
+
+[dev-dependencies]
+ordered-float = "4.2.0"
