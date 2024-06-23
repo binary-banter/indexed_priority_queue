@@ -1,136 +1,216 @@
 use std::cmp::Ordering;
-use std::ops::{Deref, DerefMut, IndexMut, Not};
+use std::ops::{Deref, DerefMut};
 
-/// Indexed Priority Queue
-///
-/// I is the type of the indices.
-/// VS is the datastructure that stores the values of each index.
-/// PS is the datastructure that stores the positions of each index in the heap.
-pub struct IndexedPriorityQueue<I, VS, PS> {
-    /// The value for each index.
-    value: VS,
-    /// The position of the index on the heap.
-    position: PS,
-    /// The underlying vec storing the values in order.
-    heap: Vec<I>,
-}
+pub trait Indexed {
+    type Index;
+    type Output;
 
-impl<I, VS, PS> IndexedPriorityQueue<I, VS, PS>
-where
-    I: Copy,
-    VS: IndexMut<I, Output: Ord + Sized + Clone>,
-    PS: IndexMut<I, Output = Option<usize>>,
-{
-    pub fn new(value: VS, position: PS) -> Self {
-        Self::with_capacity(value, position, 0)
+    fn get(&self, index: Self::Index) -> Option<&Self::Output>;
+    fn get_mut(&mut self, index: Self::Index) -> Option<&mut Self::Output>;
+    fn insert(&mut self, index: Self::Index, value: Self::Output) -> Option<Self::Output>;
+    fn remove(&mut self, index: Self::Index) -> Option<Self::Output>;
+    fn clear(&mut self);
+
+    fn contains(&self, index: Self::Index) -> bool {
+        self.get(index).is_some()
     }
 
-    pub fn with_capacity(value: VS, position: PS, capacity: usize) -> Self {
+    fn index(&self, index: Self::Index) -> &Self::Output {
+        self.get(index).unwrap()
+    }
+
+    fn index_mut(&mut self, index: Self::Index) -> &mut Self::Output {
+        self.get_mut(index).unwrap()
+    }
+}
+
+/// Indexed Priority Queue.
+pub struct IndexedPriorityQueue<Index, Priorities, Positions> {
+    /// The priorities associated with indexes on the heap.
+    priorities: Priorities,
+    /// The positions associated with indexes on the heap.
+    positions: Positions,
+    /// The underlying vec storing the indexes in order of priority.
+    heap: Vec<Index>,
+}
+
+impl<Index, Priorities, Positions> IndexedPriorityQueue<Index, Priorities, Positions>
+where
+    Index: Copy,
+    Priorities: Indexed<Index = Index, Output: Ord + Sized + Clone>,
+    Positions: Indexed<Index = Index, Output = usize>,
+{
+    /// Constructs a new, empty `IndexedPriorityQueue`.
+    pub fn new(priorities: Priorities, indexes: Positions) -> Self {
+        Self::with_capacity(priorities, indexes, 0)
+    }
+
+    /// Constructs a new, empty `IndexedPriorityQueue` with at least the specified capacity.
+    pub fn with_capacity(priorities: Priorities, positions: Positions, capacity: usize) -> Self {
         Self {
-            value,
-            position,
+            priorities,
+            positions,
             heap: Vec::with_capacity(capacity),
         }
     }
 
-    /// Returns the size of the heap.
+    /// Returns the number of indices in the indexed priority queue.
+    ///
+    /// Time complexity: `O(1)`
     pub fn len(&self) -> usize {
         self.heap.len()
     }
 
-    /// Checkk if the heap is empty
+    /// Returns `true` if the priority queue contains no indices.
+    ///
+    /// Time complexity: `O(1)`
     pub fn is_empty(&self) -> bool {
         self.heap.is_empty()
     }
 
-    /// Returns the index with the smallest value.
-    pub fn min(&self) -> Option<I> {
-        self.heap.is_empty().not().then_some(self.heap[0])
+    /// Returns `true` if the priority queue contains the specified index.
+    ///
+    /// Time complexity: `O(1)`
+    pub fn contains(&self, index: Index) -> bool {
+        self.positions.contains(index)
     }
 
-    pub fn get(&self, index: I) -> &VS::Output {
-        &self.value[index]
+    /// Returns the smallest priority in the queue, or `None`, if it is empty.
+    ///
+    /// Time complexity: `O(1)`
+    pub fn min_priority(&self) -> Option<&Priorities::Output> {
+        self.heap
+            .first()
+            .and_then(|index| self.priorities.get(*index))
     }
 
-    /// (Re-)store the given index on the heap.
-    pub fn restore(&mut self, index: I) {
-        if self.position[index].is_none() {
+    /// Returns the priority associated with the specified index, or `None`, if the index is not in the queue.
+    ///
+    /// Time complexity: `O(1)`
+    pub fn get_priority(&self, index: Index) -> Option<&Priorities::Output> {
+        self.priorities.get(index)
+    }
+
+    /// Reinserts a previously removed index into the queue with its last associated value.
+    ///
+    /// Time complexity: `O(log n)`
+    pub fn restore_index(&mut self, index: Index) {
+        if !self.positions.contains(index) {
             let position = self.len();
             self.heap.push(index);
-            self.position[index] = Some(position);
+            self.positions.insert(index, position);
             self.up_heap(position);
         }
     }
 
-    /// Remove the given index from the heap.
-    /// Should not be called with indices off the heap.
-    pub fn remove(&mut self, index: I) {
-        let position = self.position[index]
-            .take()
-            .expect("Should not be called with indices off the heap.");
+    /// Removes the specified index and its associated priority from the queue.
+    /// This method should not be called with indices that are not present in the queue.
+    /// Returns the removed priority.
+    ///
+    /// Time complexity: `O(log n)`
+    pub fn remove(&mut self, index: Index) -> Priorities::Output {
+        self.remove_index(index);
+        self.priorities.remove(index).unwrap()
+    }
+
+    /// Removes the specified index from the queue, retaining its associated priority.
+    /// This method should not be called with indices that are not present in the queue.
+    ///
+    /// Time complexity: `O(log n)`
+    pub fn remove_index(&mut self, index: Index) {
+        let position = self
+            .positions
+            .remove(index)
+            .expect("Index was not present in the queue.");
         self.heap.swap_remove(position);
         if position < self.len() {
-            self.position[self.heap[position]] = Some(position);
+            *self.positions.index_mut(self.heap[position]) = position;
             self.down_heap(position);
         }
     }
 
-    /// Sets the value of the index and pushes it onto the heap.
-    /// Should not be called with indices on the heap.
-    pub fn push(&mut self, index: I, value: VS::Output) {
-        self.value[index] = value;
-        self.restore(index);
+    /// Inserts an index-priority pair into the priority queue.
+    /// Returns the previous priority associated with the index, if it existed.
+    ///
+    /// Time complexity: `O(log n)`
+    pub fn push(&mut self, index: Index, value: Priorities::Output) -> Option<Priorities::Output> {
+        let old_priority = self.priorities.insert(index, value);
+        self.restore_index(index);
+        old_priority
     }
 
-    /// Pops the index with the smallest value.
-    pub fn pop(&mut self) -> Option<I> {
+    /// Returns the index associated with the smallest priority in the queue, or `None` if it is empty.
+    ///
+    /// Time complexity: `O(1)`
+    pub fn min(&self) -> Option<&Index> {
+        self.heap.first()
+    }
+
+    /// Removes and returns the index associated with the smallest priority in the queue, or `None` if it is empty.
+    ///
+    /// Time complexity: `O(log n)`
+    pub fn pop(&mut self) -> Option<Index> {
         if self.is_empty() {
             return None;
         }
+
+        // Removes the index associated with the smallest priority in the queue.
         let popped_index = self.heap.swap_remove(0);
-        self.position[popped_index] = None;
-        if !self.is_empty() {
-            self.position[self.heap[0]] = Some(0);
+
+        // Update positions.
+        self.positions.remove(popped_index);
+
+        // Update the position for the new root and restore the heap property.
+        if let Some(new_root) = self.heap.first() {
+            *self.positions.index_mut(*new_root) = 0;
+            self.down_heap(0);
         }
-        self.down_heap(0);
+
         Some(popped_index)
     }
 
+    /// Returns the index of the parent node in the heap for the given index `n`.
     fn parent(n: usize) -> usize {
         (n - 1) / 2
     }
 
+    /// Returns the index of the left child node in the heap for the given index `n`.
     fn left(&self, n: usize) -> Option<usize> {
         let index = 2 * n + 1;
         (index < self.len()).then_some(index)
     }
 
+    /// Returns the index of the right child node in the heap for the given index `n`.
     fn right(&self, n: usize) -> Option<usize> {
         let index = 2 * n + 2;
         (index < self.len()).then_some(index)
     }
 
-    /// Swaps the positions of two indices on the heap by heap index.
+    /// Swaps the positions of two nodes in the heap by their indices.
     fn swap(&mut self, n: usize, m: usize) {
-        self.position[self.heap[n]] = Some(m);
-        self.position[self.heap[m]] = Some(n);
+        *self.positions.index_mut(self.heap[n]) = m;
+        *self.positions.index_mut(self.heap[m]) = n;
         self.heap.swap(n, m);
     }
 
-    /// Compares two values of indices on the heap by heap index.
+    /// Compares the priorities of two nodes in the heap.
     fn compare(&self, n: usize, m: usize) -> Ordering {
-        self.value[self.heap[n]].cmp(&self.value[self.heap[m]])
+        self.priorities
+            .index(self.heap[n])
+            .cmp(self.priorities.index(self.heap[m]))
     }
 
     /// Performs up-heap bubbling from the given heap index.
     fn up_heap(&mut self, mut n: usize) {
         while n > 0 {
             let parent = Self::parent(n);
-            if self.compare(parent, n).is_le() {
+
+            if self.compare(parent, n).is_gt() {
+                self.swap(parent, n);
+                n = parent;
+            } else {
                 break;
             }
-            self.swap(n, parent);
-            n = parent;
         }
     }
 
@@ -144,114 +224,116 @@ where
                     Ordering::Greater => right_index,
                 },
             };
-            if self.compare(n, smallest_child_index).is_le() {
+
+            if self.compare(smallest_child_index, n).is_lt() {
+                self.swap(smallest_child_index, n);
+                n = smallest_child_index;
+            } else {
                 break;
             }
-            self.swap(n, smallest_child_index);
-            n = smallest_child_index;
         }
     }
 }
 
 macro_rules! generate_get_mut {
     ($struct_name:ident, $function_name:ident $(, $cfg_condition:tt)*) => {
-        impl<I, VS, PS> IndexedPriorityQueue<I, VS, PS>
+        impl<Index, Priorities, Positions> IndexedPriorityQueue<Index, Priorities, Positions>
         where
-            I: Copy,
-            VS: IndexMut<I, Output: Ord + Sized + Clone>,
-            PS: IndexMut<I, Output = Option<usize>>,
+            Index: Copy,
+            Priorities: Indexed<Index=Index, Output: Ord + Sized + Clone>,
+            Positions: Indexed<Index=Index, Output = usize>,
         {
-            pub fn $function_name(&mut self, index: I) -> $struct_name<I, VS, PS> {
+            pub fn $function_name(&mut self, index: Index) -> $struct_name<Index, Priorities, Positions> {
                 $struct_name {
                     $(#[cfg($cfg_condition)])*
-                    old_value: self.value[index].clone(),
+                    old_value: self.priorities.index(index).clone(),
                     heap: self,
                     index
                 }
             }
         }
 
-        pub struct $struct_name<'a, I, VS, PS>
+        pub struct $struct_name<'a, Index, Priorities, Positions>
         where
-            I: Copy,
-            VS: IndexMut<I, Output: Ord + Sized + Clone>,
-            PS: IndexMut<I, Output = Option<usize>>,
+            Index: Copy,
+            Priorities: Indexed<Index=Index, Output: Ord + Sized + Clone>,
+            Positions: Indexed<Index=Index, Output = usize>,
         {
             $(#[cfg($cfg_condition)])*
-            old_value: VS::Output,
-            heap: &'a mut IndexedPriorityQueue<I, VS, PS>,
-            index: I,
+            old_value: Priorities::Output,
+            heap: &'a mut IndexedPriorityQueue<Index, Priorities, Positions>,
+            index: Index,
         }
 
-        impl<'a, I, VS, PS> Deref for $struct_name<'a, I, VS, PS>
+        impl<'a, Index, Priorities, Positions> Deref for $struct_name<'a, Index, Priorities, Positions>
         where
-            I: Copy,
-            VS: IndexMut<I, Output: Ord + Sized + Clone>,
-            PS: IndexMut<I, Output = Option<usize>>,
+            Index: Copy,
+            Priorities: Indexed<Index=Index, Output: Ord + Sized + Clone>,
+            Positions: Indexed<Index=Index, Output = usize>,
         {
-            type Target = VS::Output;
+            type Target = Priorities::Output;
 
             fn deref(&self) -> &Self::Target {
-                &self.heap.value[self.index]
+                self.heap.priorities.index(self.index)
             }
         }
 
-        impl<'a, I, VS, PS> DerefMut for $struct_name<'a, I, VS, PS>
+        impl<'a, Index, Priorities, Positions> DerefMut for $struct_name<'a, Index, Priorities, Positions>
         where
-            I: Copy,
-            VS: IndexMut<I, Output: Ord + Sized + Clone>,
-            PS: IndexMut<I, Output = Option<usize>>,
+            Index: Copy,
+            Priorities: Indexed<Index=Index, Output: Ord + Sized + Clone>,
+            Positions: Indexed<Index=Index, Output = usize>,
         {
             fn deref_mut(&mut self) -> &mut Self::Target {
-                &mut self.heap.value[self.index]
+                self.heap.priorities.index_mut(self.index)
             }
         }
     };
 }
 
-generate_get_mut!(IndexedPriorityQueueRefUp, update_up, debug_assertions);
-generate_get_mut!(IndexedPriorityQueueRefDown, update_down, debug_assertions);
-generate_get_mut!(IndexedPriorityQueueRefDyn, update_dyn);
+generate_get_mut!(IPQMutRefUp, update_up, debug_assertions);
+generate_get_mut!(IPQMutRefDown, update_down, debug_assertions);
+generate_get_mut!(IPQMutRefDyn, update_dyn);
 
-impl<'a, I, VS, PS> Drop for IndexedPriorityQueueRefUp<'a, I, VS, PS>
+impl<'a, Index, Priorities, Positions> Drop for IPQMutRefUp<'a, Index, Priorities, Positions>
 where
-    I: Copy,
-    VS: IndexMut<I, Output: Ord + Sized + Clone>,
-    PS: IndexMut<I, Output = Option<usize>>,
+    Index: Copy,
+    Priorities: Indexed<Index = Index, Output: Ord + Sized + Clone>,
+    Positions: Indexed<Index = Index, Output = usize>,
 {
     fn drop(&mut self) {
-        debug_assert!(self.heap.value[self.index] >= self.old_value);
-        if let Some(position) = self.heap.position[self.index] {
-            self.heap.down_heap(position);
+        debug_assert!(*self.heap.priorities.index(self.index) >= self.old_value);
+        if let Some(position) = self.heap.positions.get(self.index) {
+            self.heap.down_heap(*position);
         }
     }
 }
 
-impl<'a, I, VS, PS> Drop for IndexedPriorityQueueRefDown<'a, I, VS, PS>
+impl<'a, Index, Priorities, Positions> Drop for IPQMutRefDown<'a, Index, Priorities, Positions>
 where
-    I: Copy,
-    VS: IndexMut<I, Output: Ord + Sized + Clone>,
-    PS: IndexMut<I, Output = Option<usize>>,
+    Index: Copy,
+    Priorities: Indexed<Index = Index, Output: Ord + Sized + Clone>,
+    Positions: Indexed<Index = Index, Output = usize>,
 {
     fn drop(&mut self) {
-        debug_assert!(self.heap.value[self.index] <= self.old_value);
-        if let Some(position) = self.heap.position[self.index] {
-            self.heap.up_heap(position);
+        debug_assert!(*self.heap.priorities.index(self.index) <= self.old_value);
+        if let Some(position) = self.heap.positions.get(self.index) {
+            self.heap.up_heap(*position);
         }
     }
 }
 
-impl<'a, I, VS, PS> Drop for IndexedPriorityQueueRefDyn<'a, I, VS, PS>
+impl<'a, Index, Priorities, Positions> Drop for IPQMutRefDyn<'a, Index, Priorities, Positions>
 where
-    I: Copy,
-    VS: IndexMut<I, Output: Ord + Sized + Clone>,
-    PS: IndexMut<I, Output = Option<usize>>,
+    Index: Copy,
+    Priorities: Indexed<Index = Index, Output: Ord + Sized + Clone>,
+    Positions: Indexed<Index = Index, Output = usize>,
 {
     fn drop(&mut self) {
-        if let Some(position) = self.heap.position[self.index] {
-            match self.heap.value[self.index].cmp(&self.old_value) {
-                Ordering::Greater => self.heap.down_heap(position),
-                Ordering::Less => self.heap.up_heap(position),
+        if let Some(position) = self.heap.positions.get(self.index) {
+            match self.heap.priorities.index(self.index).cmp(&self.old_value) {
+                Ordering::Greater => self.heap.down_heap(*position),
+                Ordering::Less => self.heap.up_heap(*position),
                 Ordering::Equal => {}
             }
         }
