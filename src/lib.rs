@@ -57,7 +57,6 @@ where
         if self.position[index].is_none() {
             let position = self.len();
             self.heap.push(index);
-            debug_assert!(self.position[index].is_none());
             self.position[index] = Some(position);
             self.up_heap(position);
         }
