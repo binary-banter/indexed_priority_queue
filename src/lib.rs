@@ -25,7 +25,12 @@ pub trait Indexed {
 }
 
 /// Indexed Priority Queue.
-pub struct IndexedPriorityQueue<Index, Priorities, Positions> {
+pub struct IndexedPriorityQueue<Index, Priorities, Positions>
+where
+    Index: Copy,
+    Priorities: Indexed<Index = Index, Output: Ord + Clone>,
+    Positions: Indexed<Index = Index, Output = usize>,
+{
     /// The priorities associated with indexes on the heap.
     priorities: Priorities,
     /// The positions associated with indexes on the heap.
@@ -37,7 +42,7 @@ pub struct IndexedPriorityQueue<Index, Priorities, Positions> {
 impl<Index, Priorities, Positions> IndexedPriorityQueue<Index, Priorities, Positions>
 where
     Index: Copy,
-    Priorities: Indexed<Index = Index, Output: Ord + Sized + Clone>,
+    Priorities: Indexed<Index = Index, Output: Ord + Clone>,
     Positions: Indexed<Index = Index, Output = usize>,
 {
     /// Constructs a new, empty `IndexedPriorityQueue`.
@@ -252,7 +257,7 @@ macro_rules! generate_get_mut {
         impl<Index, Priorities, Positions> IndexedPriorityQueue<Index, Priorities, Positions>
         where
             Index: Copy,
-            Priorities: Indexed<Index=Index, Output: Ord + Sized + Clone>,
+            Priorities: Indexed<Index=Index, Output: Ord + Clone>,
             Positions: Indexed<Index=Index, Output = usize>,
         {
             pub fn $function_name(&mut self, index: Index) -> $struct_name<Index, Priorities, Positions> {
@@ -268,7 +273,7 @@ macro_rules! generate_get_mut {
         pub struct $struct_name<'a, Index, Priorities, Positions>
         where
             Index: Copy,
-            Priorities: Indexed<Index=Index, Output: Ord + Sized + Clone>,
+            Priorities: Indexed<Index=Index, Output: Ord + Clone>,
             Positions: Indexed<Index=Index, Output = usize>,
         {
             $(#[cfg($cfg_condition)])*
@@ -280,7 +285,7 @@ macro_rules! generate_get_mut {
         impl<'a, Index, Priorities, Positions> Deref for $struct_name<'a, Index, Priorities, Positions>
         where
             Index: Copy,
-            Priorities: Indexed<Index=Index, Output: Ord + Sized + Clone>,
+            Priorities: Indexed<Index=Index, Output: Ord + Clone>,
             Positions: Indexed<Index=Index, Output = usize>,
         {
             type Target = Priorities::Output;
@@ -293,7 +298,7 @@ macro_rules! generate_get_mut {
         impl<'a, Index, Priorities, Positions> DerefMut for $struct_name<'a, Index, Priorities, Positions>
         where
             Index: Copy,
-            Priorities: Indexed<Index=Index, Output: Ord + Sized + Clone>,
+            Priorities: Indexed<Index=Index, Output: Ord + Clone>,
             Positions: Indexed<Index=Index, Output = usize>,
         {
             fn deref_mut(&mut self) -> &mut Self::Target {
@@ -310,7 +315,7 @@ generate_get_mut!(IPQMutRefDyn, update_dyn);
 impl<'a, Index, Priorities, Positions> Drop for IPQMutRefUp<'a, Index, Priorities, Positions>
 where
     Index: Copy,
-    Priorities: Indexed<Index = Index, Output: Ord + Sized + Clone>,
+    Priorities: Indexed<Index = Index, Output: Ord + Clone>,
     Positions: Indexed<Index = Index, Output = usize>,
 {
     fn drop(&mut self) {
@@ -324,7 +329,7 @@ where
 impl<'a, Index, Priorities, Positions> Drop for IPQMutRefDown<'a, Index, Priorities, Positions>
 where
     Index: Copy,
-    Priorities: Indexed<Index = Index, Output: Ord + Sized + Clone>,
+    Priorities: Indexed<Index = Index, Output: Ord + Clone>,
     Positions: Indexed<Index = Index, Output = usize>,
 {
     fn drop(&mut self) {
@@ -338,7 +343,7 @@ where
 impl<'a, Index, Priorities, Positions> Drop for IPQMutRefDyn<'a, Index, Priorities, Positions>
 where
     Index: Copy,
-    Priorities: Indexed<Index = Index, Output: Ord + Sized + Clone>,
+    Priorities: Indexed<Index = Index, Output: Ord + Clone>,
     Positions: Indexed<Index = Index, Output = usize>,
 {
     fn drop(&mut self) {
