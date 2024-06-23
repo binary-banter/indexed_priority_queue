@@ -129,6 +129,18 @@ where
         }
     }
 
+    /// Clears all indices and their priorities from the queue.
+    pub fn clear(&mut self) {
+        self.clear_indices();
+        self.priorities.clear();
+    }
+
+    /// Clears all indices from the queue.
+    pub fn clear_indices(&mut self) {
+        self.positions.clear();
+        self.heap.clear();
+    }
+
     /// Inserts an index-priority pair into the priority queue.
     /// Returns the previous priority associated with the index, if it existed.
     ///
