@@ -103,17 +103,17 @@ pub fn main() {
 
     // While there are nodes to process
     while let Some(node) = queue.pop() {
-        let node_best_distance = *queue.update_up(node);
+        let node_best_distance = queue.get_priority(node).unwrap().0;
 
         // If we found the end, check if the result is correct
         if node == end {
-            assert_eq!(node_best_distance.0, 19);
+            assert_eq!(node_best_distance, 19);
             return;
         }
 
         for (neighbor, distance_to_neighbor) in &graph[node] {
             let mut neighbor_best_distance = queue.update_down(*neighbor);
-            let alternative_distance = node_best_distance.0 + *distance_to_neighbor;
+            let alternative_distance = node_best_distance + *distance_to_neighbor;
             if alternative_distance < neighbor_best_distance.0 {
                 *neighbor_best_distance = Distance(alternative_distance);
                 drop(neighbor_best_distance);
