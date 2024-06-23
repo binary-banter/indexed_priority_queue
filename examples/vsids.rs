@@ -30,9 +30,9 @@ pub type VSIDS =
 
 // Creates a Variable State Independent Decay Sum (VSIDS) datastructure for use in SAT-solving.
 // It must be able to remove, restore and update entries by index and pop the entry with the largest value.
-// Since the number of literals is constant for most SAT-solvers, we use a fixed size array for `VS` and `PS`.
+// Since the number of variables is constant for most SAT-solvers, we use a fixed size array for `VS` and `PS`.
 pub fn main() {
-    // Capacity for 4 literals.
+    // Capacity for 4 variables.
     let capacity = 4;
     let mut vsids = VSIDS::with_capacity(
         Boxed::with_capacity(capacity),
@@ -45,28 +45,28 @@ pub fn main() {
         vsids.push(variable, Reverse(0.0.into()));
     }
 
-    // Assign literals 1, 2 and 3.
+    // Assign variables 1, 2 and 3.
     vsids.remove(1);
     vsids.remove(2);
     vsids.remove(3);
 
-    // Conflict on literal 3.
+    // Conflict on variable 3.
     vsids.update_down(3).0 .0 += 1.0;
     vsids.restore(3);
 
-    // During branching, we will now select literal 3.
+    // During branching, we will now select variable 3.
     assert_eq!(vsids.pop(), Some(3));
 
-    // Assign literal 4.
+    // Assign variable 4.
     vsids.remove(4);
 
-    // Conflict on literals 3 and 4.
+    // Conflict on variables 3 and 4.
     vsids.update_down(4).0 .0 += 1.0;
     vsids.restore(4);
     vsids.update_down(3).0 .0 += 1.0;
     vsids.restore(3);
 
-    // During branching, we will now select literal 3 followed by 4.
+    // During branching, we will now select variable 3 followed by 4.
     assert_eq!(vsids.pop(), Some(3));
     assert_eq!(vsids.pop(), Some(4));
 
