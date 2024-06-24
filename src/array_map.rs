@@ -7,7 +7,7 @@ pub struct ArrayPriorityMap<Priority, const N: usize = 0>(Box<[Priority]>);
 #[derive(Debug)]
 pub struct ArrayPositionMap<const N: usize = 0>(Box<[Option<usize>]>);
 
-impl<const OFFSET: usize, Priority: Clone> Indexed for ArrayPriorityMap<Priority, OFFSET> {
+impl<Priority: Clone, const OFFSET: usize> Indexed for ArrayPriorityMap<Priority, OFFSET> {
     type Index = usize;
     type Output = Priority;
 
