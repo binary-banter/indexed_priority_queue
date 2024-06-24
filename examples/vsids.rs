@@ -10,7 +10,7 @@ pub fn main() {
     let capacity = 4;
 
     // Initialize the queue.
-    let mut vsids = ArrayMapIPQ::with_capacity(
+    let mut vsids = ArrayMapIPQ::<_, 1>::with_capacity(
         vec![Reverse(OrderedFloat(0.)); capacity].into_boxed_slice(),
         vec![None; capacity].into_boxed_slice(),
         capacity,

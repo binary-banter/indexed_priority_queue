@@ -16,8 +16,8 @@ pub type HashMapIPQ<Index, Priority> =
 pub type DefaultMapIPQ<Index, Priority> =
     IndexedPriorityQueue<Index, DefaultMap<Index, Priority>, IndexedHashMap<Index, usize>>;
 
-pub type ArrayMapIPQ<Priority> =
-    IndexedPriorityQueue<usize, ArrayPriorityMap<Priority>, ArrayPositionMap>;
+pub type ArrayMapIPQ<Priority, const OFFSET: usize = 0> =
+    IndexedPriorityQueue<usize, ArrayPriorityMap<Priority, OFFSET>, ArrayPositionMap<OFFSET>>;
 
 /// Indexed Priority Queue.
 #[derive(Debug)]
