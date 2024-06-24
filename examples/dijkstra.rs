@@ -10,12 +10,6 @@ impl Default for Distance {
     }
 }
 
-impl Default for &Distance {
-    fn default() -> Self {
-        &Distance(usize::MAX)
-    }
-}
-
 pub fn main() {
     // Graph from https://www.geeksforgeeks.org/introduction-to-dijkstras-shortest-path-algorithm/
     // The graph is represented as pairs of (neighbour, length)

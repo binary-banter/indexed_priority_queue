@@ -3,19 +3,14 @@ use std::collections::HashMap;
 use std::hash::Hash;
 
 #[derive(Default, Debug)]
-pub struct DefaultMap<K, V>(HashMap<K, V>);
+pub struct DefaultMap<K, V>(HashMap<K, V>, V);
 
-impl<K, V> Indexed for DefaultMap<K, V>
-where
-    K: Eq + Hash,
-    V: Default,
-    for<'a> &'a V: Default,
-{
+impl<K: Eq + Hash, V: Default> Indexed for DefaultMap<K, V> {
     type Index = K;
     type Output = V;
 
     fn get(&self, index: K) -> Option<&Self::Output> {
-        Some(self.0.get(&index).unwrap_or_default())
+        Some(self.0.get(&index).unwrap_or(&self.1))
     }
 
     fn get_mut(&mut self, index: Self::Index) -> Option<&mut Self::Output> {
@@ -35,8 +30,8 @@ where
     }
 }
 
-impl<K, V> From<HashMap<K, V>> for DefaultMap<K, V> {
+impl<K, V: Default> From<HashMap<K, V>> for DefaultMap<K, V> {
     fn from(value: HashMap<K, V>) -> Self {
-        Self(value)
+        Self(value, V::default())
     }
 }
