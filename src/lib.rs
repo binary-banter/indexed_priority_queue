@@ -122,14 +122,12 @@ where
     ///
     /// Time complexity: `O(log n)`
     pub fn remove_index(&mut self, index: Index) {
-        let position = self
-            .positions
-            .remove(index)
-            .expect("Index was not present in the queue.");
-        self.heap.swap_remove(position);
-        if position < self.len() {
-            *self.positions.index_mut(self.heap[position]) = position;
-            self.down_heap(position);
+        if let Some(position) = self.positions.remove(index) {
+            self.heap.swap_remove(position);
+            if position < self.len() {
+                *self.positions.index_mut(self.heap[position]) = position;
+                self.down_heap(position);
+            }
         }
     }
 
