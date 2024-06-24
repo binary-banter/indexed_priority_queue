@@ -20,6 +20,7 @@ pub type ArrayMapIPQ<Priority> =
     IndexedPriorityQueue<usize, ArrayPriorityMap<Priority>, ArrayPositionMap>;
 
 /// Indexed Priority Queue.
+#[derive(Debug)]
 pub struct IndexedPriorityQueue<Index, Priorities, Positions>
 where
     Index: Copy,
@@ -118,7 +119,6 @@ where
     }
 
     /// Removes the specified index from the queue, retaining its associated priority.
-    /// This method should not be called with indices that are not present in the queue.
     ///
     /// Time complexity: `O(log n)`
     pub fn remove_index(&mut self, index: Index) {
@@ -150,8 +150,15 @@ where
     ///
     /// Time complexity: `O(log n)`
     pub fn push(&mut self, index: Index, value: Priorities::Output) -> Option<Priorities::Output> {
-        let old_priority = self.priorities.insert(index, value);
-        self.restore_index(index);
+        let old_priority = self.get_priority(index).cloned();
+
+        if self.contains(index) {
+            *self.update_dyn(index) = value;
+        } else {
+            self.priorities.insert(index, value);
+            self.restore_index(index);
+        }
+
         old_priority
     }
 
