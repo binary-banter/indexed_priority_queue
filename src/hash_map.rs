@@ -2,7 +2,7 @@ use crate::indexed::Indexed;
 use std::collections::HashMap;
 use std::hash::Hash;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct IndexedHashMap<K, V>(HashMap<K, V>);
 
 impl<K: Eq + Hash, V> Indexed for IndexedHashMap<K, V> {

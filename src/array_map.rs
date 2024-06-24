@@ -1,7 +1,10 @@
 use crate::indexed::Indexed;
 use std::mem;
 
+#[derive(Debug)]
 pub struct ArrayPriorityMap<Priority>(Box<[Priority]>);
+
+#[derive(Debug)]
 pub struct ArrayPositionMap(Box<[Option<usize>]>);
 
 impl<Priority: Clone> Indexed for ArrayPriorityMap<Priority> {
