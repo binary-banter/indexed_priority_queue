@@ -48,7 +48,6 @@ fn push_update() {
     pq.push("g", Reverse(10));
     pq.push("k", Reverse(11));
 
-    // todo: push doesn't resort indices already in the queue. `update_down` would be better here
     pq.push("d", Reverse(20));
 
     assert_eq!(pq.min(), Some(&"d"));
