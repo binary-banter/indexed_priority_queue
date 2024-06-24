@@ -251,6 +251,17 @@ where
     }
 }
 
+impl<Index, Priorities, Positions> Default for IndexedPriorityQueue<Index, Priorities, Positions>
+where
+    Index: Copy,
+    Priorities: Indexed<Index = Index, Output: Ord + Clone> + Default,
+    Positions: Indexed<Index = Index, Output = usize> + Default,
+{
+    fn default() -> Self {
+        Self::new(Priorities::default(), Positions::default())
+    }
+}
+
 macro_rules! generate_get_mut {
     ($struct_name:ident, $function_name:ident $(, $cfg_condition:tt)*) => {
         impl<Index, Priorities, Positions> IndexedPriorityQueue<Index, Priorities, Positions>

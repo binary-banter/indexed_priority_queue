@@ -1,5 +1,4 @@
 use indexed_priority_queue::DefaultMapIPQ;
-use std::collections::HashMap;
 
 // A distance is a `usize` with as default `usize::MAX`.
 #[derive(Ord, PartialOrd, Eq, PartialEq, Copy, Clone)]
@@ -34,7 +33,7 @@ pub fn main() {
     let (start, end) = (0, 6);
 
     // Queue of nodes and the best path to them so far
-    let mut queue = DefaultMapIPQ::new(HashMap::default(), HashMap::default());
+    let mut queue = DefaultMapIPQ::default();
     queue.push(start, Distance(0));
 
     // While there are nodes to process
