@@ -1,6 +1,5 @@
-use indexed_priority_queue::{Indexed, IndexedPriorityQueue};
+use indexed_priority_queue::DefaultMapIPQ;
 use std::collections::HashMap;
-use std::hash::Hash;
 
 // A distance is a `usize` with as default `usize::MAX`.
 #[derive(Ord, PartialOrd, Eq, PartialEq, Copy, Clone)]
@@ -17,69 +16,6 @@ impl Default for &Distance {
         &Distance(usize::MAX)
     }
 }
-
-#[derive(Default)]
-struct DefaultMap<K, V>(HashMap<K, V>);
-
-impl<K, V> Indexed for DefaultMap<K, V>
-where
-    K: Eq + Hash,
-    V: Default,
-    for<'a> &'a V: Default,
-{
-    type Index = K;
-    type Output = V;
-
-    fn get(&self, index: K) -> Option<&Self::Output> {
-        Some(self.0.get(&index).unwrap_or_default())
-    }
-
-    fn get_mut(&mut self, index: Self::Index) -> Option<&mut Self::Output> {
-        Some(self.0.entry(index).or_default())
-    }
-
-    fn insert(&mut self, index: Self::Index, value: Self::Output) -> Option<Self::Output> {
-        self.0.insert(index, value)
-    }
-
-    fn remove(&mut self, index: Self::Index) -> Option<Self::Output> {
-        self.0.remove(&index)
-    }
-
-    fn clear(&mut self) {
-        self.0.clear()
-    }
-}
-
-#[derive(Default)]
-struct Map<K, V>(HashMap<K, V>);
-
-impl<K: Eq + Hash, V> Indexed for Map<K, V> {
-    type Index = K;
-    type Output = V;
-
-    fn get(&self, index: K) -> Option<&Self::Output> {
-        self.0.get(&index)
-    }
-
-    fn get_mut(&mut self, index: Self::Index) -> Option<&mut Self::Output> {
-        self.0.get_mut(&index)
-    }
-
-    fn insert(&mut self, index: Self::Index, value: Self::Output) -> Option<Self::Output> {
-        self.0.insert(index, value)
-    }
-
-    fn remove(&mut self, index: Self::Index) -> Option<Self::Output> {
-        self.0.remove(&index)
-    }
-
-    fn clear(&mut self) {
-        self.0.clear()
-    }
-}
-
-type Queue = IndexedPriorityQueue<usize, DefaultMap<usize, Distance>, Map<usize, usize>>;
 
 pub fn main() {
     // Graph from https://www.geeksforgeeks.org/introduction-to-dijkstras-shortest-path-algorithm/
@@ -98,7 +34,7 @@ pub fn main() {
     let (start, end) = (0, 6);
 
     // Queue of nodes and the best path to them so far
-    let mut queue = Queue::new(DefaultMap::default(), Map::default());
+    let mut queue = DefaultMapIPQ::new(HashMap::default(), HashMap::default());
     queue.push(start, Distance(0));
 
     // While there are nodes to process

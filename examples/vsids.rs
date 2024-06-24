@@ -1,97 +1,6 @@
-use indexed_priority_queue::{Indexed, IndexedPriorityQueue};
+use indexed_priority_queue::ArrayMapIPQ;
 use ordered_float::OrderedFloat;
 use std::cmp::Reverse;
-use std::mem;
-
-struct Priorities(Box<[Reverse<OrderedFloat<f32>>]>);
-struct Positions(Box<[Option<usize>]>);
-type VSIDS = IndexedPriorityQueue<usize, Priorities, Positions>;
-
-impl Priorities {
-    pub fn with_capacity(capacity: usize) -> Self {
-        Self(vec![Default::default(); capacity].into_boxed_slice())
-    }
-}
-
-impl Positions {
-    pub fn with_capacity(capacity: usize) -> Self {
-        Self(vec![Default::default(); capacity].into_boxed_slice())
-    }
-}
-
-impl Indexed for Priorities {
-    type Index = usize;
-    type Output = Reverse<OrderedFloat<f32>>;
-
-    fn get(&self, index: Self::Index) -> Option<&Self::Output> {
-        let index = index - 1;
-        debug_assert!(index < self.0.len());
-
-        Some(&self.0[index])
-    }
-
-    fn get_mut(&mut self, index: Self::Index) -> Option<&mut Self::Output> {
-        let index = index - 1;
-        debug_assert!(index < self.0.len());
-
-        Some(&mut self.0[index])
-    }
-
-    fn insert(&mut self, index: Self::Index, mut value: Self::Output) -> Option<Self::Output> {
-        let index = index - 1;
-        debug_assert!(index < self.0.len());
-
-        let old_value = &mut self.0[index];
-        mem::swap(old_value, &mut value);
-        Some(value)
-    }
-
-    fn remove(&mut self, index: Self::Index) -> Option<Self::Output> {
-        let index = index - 1;
-        debug_assert!(index < self.0.len());
-
-        Some(self.0[index])
-    }
-
-    fn clear(&mut self) {}
-}
-
-impl Indexed for Positions {
-    type Index = usize;
-    type Output = usize;
-
-    fn get(&self, index: Self::Index) -> Option<&Self::Output> {
-        let index = index - 1;
-        debug_assert!(index < self.0.len());
-
-        self.0[index].as_ref()
-    }
-
-    fn get_mut(&mut self, index: Self::Index) -> Option<&mut Self::Output> {
-        let index = index - 1;
-        debug_assert!(index < self.0.len());
-
-        self.0[index].as_mut()
-    }
-
-    fn insert(&mut self, index: Self::Index, value: Self::Output) -> Option<Self::Output> {
-        let index = index - 1;
-        debug_assert!(index < self.0.len());
-
-        let old_value = self.0[index];
-        self.0[index] = Some(value);
-        old_value
-    }
-
-    fn remove(&mut self, index: Self::Index) -> Option<Self::Output> {
-        let index = index - 1;
-        debug_assert!(index < self.0.len());
-
-        self.0[index].take()
-    }
-
-    fn clear(&mut self) {}
-}
 
 // Creates a Variable State Independent Decay Sum (VSIDS) datastructure for use in SAT-solving.
 // It must be able to remove, restore and update entries by index and pop the entry with the largest value.
@@ -99,9 +8,11 @@ impl Indexed for Positions {
 pub fn main() {
     // Capacity for 4 variables.
     let capacity = 4;
-    let mut vsids = VSIDS::with_capacity(
-        Priorities::with_capacity(capacity),
-        Positions::with_capacity(capacity),
+
+    // Initialize the queue.
+    let mut vsids = ArrayMapIPQ::with_capacity(
+        vec![Reverse(OrderedFloat(0.)); capacity].into_boxed_slice(),
+        vec![None; capacity].into_boxed_slice(),
         capacity,
     );
 

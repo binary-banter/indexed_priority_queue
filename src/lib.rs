@@ -1,28 +1,23 @@
+mod array_map;
+mod default_map;
+mod hash_map;
+pub mod indexed;
+
+use crate::array_map::{ArrayPositionMap, ArrayPriorityMap};
+use crate::default_map::DefaultMap;
+use crate::hash_map::IndexedHashMap;
+use crate::indexed::Indexed;
 use std::cmp::Ordering;
 use std::ops::{Deref, DerefMut};
 
-pub trait Indexed {
-    type Index;
-    type Output;
+pub type HashMapIPQ<Index, Priority> =
+    IndexedPriorityQueue<Index, IndexedHashMap<Index, Priority>, IndexedHashMap<Index, usize>>;
 
-    fn get(&self, index: Self::Index) -> Option<&Self::Output>;
-    fn get_mut(&mut self, index: Self::Index) -> Option<&mut Self::Output>;
-    fn insert(&mut self, index: Self::Index, value: Self::Output) -> Option<Self::Output>;
-    fn remove(&mut self, index: Self::Index) -> Option<Self::Output>;
-    fn clear(&mut self);
+pub type DefaultMapIPQ<Index, Priority> =
+    IndexedPriorityQueue<Index, DefaultMap<Index, Priority>, IndexedHashMap<Index, usize>>;
 
-    fn contains(&self, index: Self::Index) -> bool {
-        self.get(index).is_some()
-    }
-
-    fn index(&self, index: Self::Index) -> &Self::Output {
-        self.get(index).unwrap()
-    }
-
-    fn index_mut(&mut self, index: Self::Index) -> &mut Self::Output {
-        self.get_mut(index).unwrap()
-    }
-}
+pub type ArrayMapIPQ<Priority> =
+    IndexedPriorityQueue<usize, ArrayPriorityMap<Priority>, ArrayPositionMap>;
 
 /// Indexed Priority Queue.
 pub struct IndexedPriorityQueue<Index, Priorities, Positions>
@@ -46,15 +41,19 @@ where
     Positions: Indexed<Index = Index, Output = usize>,
 {
     /// Constructs a new, empty `IndexedPriorityQueue`.
-    pub fn new(priorities: Priorities, indexes: Positions) -> Self {
-        Self::with_capacity(priorities, indexes, 0)
+    pub fn new(priorities: impl Into<Priorities>, positions: impl Into<Positions>) -> Self {
+        Self::with_capacity(priorities.into(), positions.into(), 0)
     }
 
     /// Constructs a new, empty `IndexedPriorityQueue` with at least the specified capacity.
-    pub fn with_capacity(priorities: Priorities, positions: Positions, capacity: usize) -> Self {
+    pub fn with_capacity(
+        priorities: impl Into<Priorities>,
+        positions: impl Into<Positions>,
+        capacity: usize,
+    ) -> Self {
         Self {
-            priorities,
-            positions,
+            priorities: priorities.into(),
+            positions: positions.into(),
             heap: Vec::with_capacity(capacity),
         }
     }
