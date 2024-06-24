@@ -1,5 +1,5 @@
 // Tests adapted from https://github.com/garro95/priority-queue/blob/4eecbd7ffa182a1def25d520dc78acd561032d11/tests/priority_queue.rs.
-// todo: add license
+// Licensed under MPL-2.0.txt.
 
 use indexed_priority_queue::HashMapIPQ;
 use std::cmp::Reverse;
