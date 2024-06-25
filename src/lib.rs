@@ -334,7 +334,8 @@ where
     Positions: Indexed<Index = Index, Output = usize>,
 {
     fn drop(&mut self) {
-        debug_assert!(*self.heap.priorities.index(self.index) >= self.old_value);
+        #[cfg(debug_assertions)]
+        assert!(*self.heap.priorities.index(self.index) >= self.old_value);
         if let Some(position) = self.heap.positions.get(self.index) {
             self.heap.down_heap(*position);
         }
@@ -348,7 +349,8 @@ where
     Positions: Indexed<Index = Index, Output = usize>,
 {
     fn drop(&mut self) {
-        debug_assert!(*self.heap.priorities.index(self.index) <= self.old_value);
+        #[cfg(debug_assertions)]
+        assert!(*self.heap.priorities.index(self.index) <= self.old_value);
         if let Some(position) = self.heap.positions.get(self.index) {
             self.heap.up_heap(*position);
         }
