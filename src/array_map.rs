@@ -80,7 +80,9 @@ impl<const OFFSET: usize> Indexed for ArrayPositionMap<OFFSET> {
         }
     }
 
-    fn clear(&mut self) {}
+    fn clear(&mut self) {
+        self.0.fill(usize::MAX);
+    }
 }
 
 impl<Priority, const OFFSET: usize> From<Box<[Priority]>> for ArrayPriorityMap<Priority, OFFSET> {
