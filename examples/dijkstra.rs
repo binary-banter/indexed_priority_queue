@@ -1,27 +1,7 @@
-use indexed_priority_queue::IndexedPriorityQueue;
-use std::collections::HashMap;
-use std::hash::Hash;
-use std::ops::{Index, IndexMut};
+use indexed_priority_queue::DefaultMapIPQ;
 
-#[derive(Default)]
-pub struct DefaultMapped<K, V: Default>(HashMap<K, V>, V);
-
-impl<K: Copy + Hash + Eq, V: Default> Index<K> for DefaultMapped<K, V> {
-    type Output = V;
-
-    fn index(&self, index: K) -> &Self::Output {
-        self.0.get(&index).unwrap_or(&self.1)
-    }
-}
-
-impl<K: Copy + Hash + Eq, V: Default> IndexMut<K> for DefaultMapped<K, V> {
-    fn index_mut(&mut self, index: K) -> &mut Self::Output {
-        self.0.entry(index).or_default()
-    }
-}
-
-// A distance is a `usize` with as default usize::MAX
-#[derive(Ord, PartialOrd, Eq, PartialEq, Copy, Clone, Hash)]
+// A distance is a `usize` with as default `usize::MAX`.
+#[derive(Ord, PartialOrd, Eq, PartialEq, Copy, Clone)]
 pub struct Distance(usize);
 
 impl Default for Distance {
@@ -30,16 +10,10 @@ impl Default for Distance {
     }
 }
 
-pub type Queue = IndexedPriorityQueue<
-    usize,
-    DefaultMapped<usize, Distance>,
-    DefaultMapped<usize, Option<usize>>,
->;
-
 pub fn main() {
     // Graph from https://www.geeksforgeeks.org/introduction-to-dijkstras-shortest-path-algorithm/
     // The graph is represented as pairs of (neighbour, length)
-    let graph: Vec<Vec<(usize, usize)>> = vec![
+    let graph = vec![
         vec![(1, 2), (2, 6)],
         vec![(0, 2), (3, 5)],
         vec![(0, 6), (3, 8)],
@@ -50,32 +24,32 @@ pub fn main() {
     ];
 
     // The start and end node id of the graph
-    let start = 0;
-    let end = 6;
+    let (start, end) = (0, 6);
 
     // Queue of nodes and the best path to them so far
-    let mut queue = Queue::new(DefaultMapped::default(), DefaultMapped::default());
+    let mut queue = DefaultMapIPQ::default();
     queue.push(start, Distance(0));
 
     // While there are nodes to process
     while let Some(node) = queue.pop() {
-        let node_best_distance = *queue.update_up(node);
+        let node_best_distance = queue.get_priority(node).unwrap().0;
 
         // If we found the end, check if the result is correct
         if node == end {
-            assert_eq!(node_best_distance.0, 19);
+            assert_eq!(node_best_distance, 19);
             return;
         }
 
         for (neighbor, distance_to_neighbor) in &graph[node] {
             let mut neighbor_best_distance = queue.update_down(*neighbor);
-            let alternative_distance = node_best_distance.0 + *distance_to_neighbor;
+            let alternative_distance = node_best_distance + *distance_to_neighbor;
             if alternative_distance < neighbor_best_distance.0 {
                 *neighbor_best_distance = Distance(alternative_distance);
                 drop(neighbor_best_distance);
-                queue.restore(*neighbor);
+                queue.restore_index(*neighbor);
             }
         }
     }
+
     unreachable!();
 }
