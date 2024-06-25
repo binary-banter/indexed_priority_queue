@@ -5,7 +5,7 @@ use std::mem;
 pub struct ArrayPriorityMap<Priority, const N: usize = 0>(Box<[Priority]>);
 
 #[derive(Debug)]
-pub struct ArrayPositionMap<const N: usize = 0>(Box<[Option<usize>]>);
+pub struct ArrayPositionMap<const N: usize = 0>(Box<[usize]>);
 
 impl<Priority: Clone, const OFFSET: usize> Indexed for ArrayPriorityMap<Priority, OFFSET> {
     type Index = usize;
@@ -52,30 +52,40 @@ impl<const OFFSET: usize> Indexed for ArrayPositionMap<OFFSET> {
         let index = index - OFFSET;
         debug_assert!(index < self.0.len());
 
-        self.0[index].as_ref()
+        match &self.0[index] {
+            &usize::MAX => None,
+            position => Some(position),
+        }
     }
 
     fn get_mut(&mut self, index: Self::Index) -> Option<&mut Self::Output> {
         let index = index - OFFSET;
         debug_assert!(index < self.0.len());
 
-        self.0[index].as_mut()
+        match &mut self.0[index] {
+            &mut usize::MAX => None,
+            position => Some(position),
+        }
     }
 
     fn insert(&mut self, index: Self::Index, value: Self::Output) -> Option<Self::Output> {
         let index = index - OFFSET;
         debug_assert!(index < self.0.len());
 
-        let old_value = self.0[index];
-        self.0[index] = Some(value);
-        old_value
+        match mem::replace(&mut self.0[index], value) {
+            usize::MAX => None,
+            position => Some(position),
+        }
     }
 
     fn remove(&mut self, index: Self::Index) -> Option<Self::Output> {
         let index = index - OFFSET;
         debug_assert!(index < self.0.len());
 
-        self.0[index].take()
+        match mem::replace(&mut self.0[index], usize::MAX) {
+            usize::MAX => None,
+            position => Some(position),
+        }
     }
 
     fn clear(&mut self) {}
@@ -87,8 +97,8 @@ impl<Priority, const OFFSET: usize> From<Box<[Priority]>> for ArrayPriorityMap<P
     }
 }
 
-impl<const OFFSET: usize> From<Box<[Option<usize>]>> for ArrayPositionMap<OFFSET> {
-    fn from(value: Box<[Option<usize>]>) -> Self {
+impl<const OFFSET: usize> From<Box<[usize]>> for ArrayPositionMap<OFFSET> {
+    fn from(value: Box<[usize]>) -> Self {
         Self(value)
     }
 }

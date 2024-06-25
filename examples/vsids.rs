@@ -12,7 +12,7 @@ pub fn main() {
     // Initialize the queue.
     let mut vsids = ArrayMapIPQ::<_, 1>::with_capacity(
         vec![Reverse(OrderedFloat(0.)); capacity].into_boxed_slice(),
-        vec![None; capacity].into_boxed_slice(),
+        vec![usize::MAX; capacity].into_boxed_slice(),
         capacity,
     );
 
