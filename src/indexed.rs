@@ -19,4 +19,7 @@ pub trait Indexed {
     fn index_mut(&mut self, index: Self::Index) -> &mut Self::Output {
         self.get_mut(index).unwrap()
     }
+
+    fn iter(&mut self) -> impl Iterator<Item = &Self::Output>;
+    fn iter_mut(&mut self) -> impl Iterator<Item = &mut Self::Output>;
 }

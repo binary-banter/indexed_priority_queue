@@ -38,6 +38,14 @@ impl<Priority: Clone, const OFFSET: usize> Indexed for ArrayPriorityMap<Priority
     }
 
     fn clear(&mut self) {}
+
+    fn iter(&mut self) -> impl Iterator<Item = &Self::Output> {
+        self.0.iter()
+    }
+
+    fn iter_mut(&mut self) -> impl Iterator<Item = &mut Self::Output> {
+        self.0.iter_mut()
+    }
 }
 
 impl<const OFFSET: usize> Indexed for ArrayPositionMap<OFFSET> {
@@ -82,6 +90,14 @@ impl<const OFFSET: usize> Indexed for ArrayPositionMap<OFFSET> {
 
     fn clear(&mut self) {
         self.0.fill(usize::MAX);
+    }
+
+    fn iter(&mut self) -> impl Iterator<Item = &Self::Output> {
+        self.0.iter().filter(|v| **v != usize::MAX)
+    }
+
+    fn iter_mut(&mut self) -> impl Iterator<Item = &mut Self::Output> {
+        self.0.iter_mut().filter(|v| **v != usize::MAX)
     }
 }
 

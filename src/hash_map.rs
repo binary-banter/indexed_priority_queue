@@ -28,6 +28,14 @@ impl<K: Eq + Hash, V> Indexed for IndexedHashMap<K, V> {
     fn clear(&mut self) {
         self.0.clear()
     }
+
+    fn iter(&mut self) -> impl Iterator<Item = &Self::Output> {
+        self.0.values()
+    }
+
+    fn iter_mut(&mut self) -> impl Iterator<Item = &mut Self::Output> {
+        self.0.values_mut()
+    }
 }
 
 impl<K, V> From<HashMap<K, V>> for IndexedHashMap<K, V> {

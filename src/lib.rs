@@ -190,6 +190,14 @@ where
         Some(popped_index)
     }
 
+    /// Update the priorities of the values in the heap using a function
+    /// The function must not change the relative order of any elements in the heap
+    pub fn update_priorities_order_preserving(&mut self, f: impl Fn(&mut Priorities::Output)) {
+        for v in self.priorities.iter_mut() {
+            f(v);
+        }
+    }
+
     /// Returns the index of the parent node in the heap for the given index `n`.
     fn parent(n: usize) -> usize {
         (n - 1) / 2

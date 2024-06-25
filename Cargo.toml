@@ -1,7 +1,7 @@
 [package]
 name = "indexed_priority_queue"
 description = "An indexed priority queue with index-based removals, restores and value updates."
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["Julia Dijkstra <juliadijkstra97@gmail.com", "Jonathan Brouwer <jonathantbrouwer@gmail.com>"]
 license = "MIT"
