@@ -13,21 +13,18 @@ impl<Priority: Clone, const OFFSET: usize> Indexed for ArrayPriorityMap<Priority
 
     fn get(&self, index: Self::Index) -> Option<&Self::Output> {
         let index = index - OFFSET;
-        debug_assert!(index < self.0.len());
 
         Some(&self.0[index])
     }
 
     fn get_mut(&mut self, index: Self::Index) -> Option<&mut Self::Output> {
         let index = index - OFFSET;
-        debug_assert!(index < self.0.len());
 
         Some(&mut self.0[index])
     }
 
     fn insert(&mut self, index: Self::Index, mut value: Self::Output) -> Option<Self::Output> {
         let index = index - OFFSET;
-        debug_assert!(index < self.0.len());
 
         let old_value = &mut self.0[index];
         mem::swap(old_value, &mut value);
@@ -36,7 +33,6 @@ impl<Priority: Clone, const OFFSET: usize> Indexed for ArrayPriorityMap<Priority
 
     fn remove(&mut self, index: Self::Index) -> Option<Self::Output> {
         let index = index - OFFSET;
-        debug_assert!(index < self.0.len());
 
         Some(self.0[index].clone())
     }
@@ -50,7 +46,6 @@ impl<const OFFSET: usize> Indexed for ArrayPositionMap<OFFSET> {
 
     fn get(&self, index: Self::Index) -> Option<&Self::Output> {
         let index = index - OFFSET;
-        debug_assert!(index < self.0.len());
 
         match &self.0[index] {
             &usize::MAX => None,
@@ -60,7 +55,6 @@ impl<const OFFSET: usize> Indexed for ArrayPositionMap<OFFSET> {
 
     fn get_mut(&mut self, index: Self::Index) -> Option<&mut Self::Output> {
         let index = index - OFFSET;
-        debug_assert!(index < self.0.len());
 
         match &mut self.0[index] {
             &mut usize::MAX => None,
@@ -70,7 +64,6 @@ impl<const OFFSET: usize> Indexed for ArrayPositionMap<OFFSET> {
 
     fn insert(&mut self, index: Self::Index, value: Self::Output) -> Option<Self::Output> {
         let index = index - OFFSET;
-        debug_assert!(index < self.0.len());
 
         match mem::replace(&mut self.0[index], value) {
             usize::MAX => None,
@@ -80,7 +73,6 @@ impl<const OFFSET: usize> Indexed for ArrayPositionMap<OFFSET> {
 
     fn remove(&mut self, index: Self::Index) -> Option<Self::Output> {
         let index = index - OFFSET;
-        debug_assert!(index < self.0.len());
 
         match mem::replace(&mut self.0[index], usize::MAX) {
             usize::MAX => None,
